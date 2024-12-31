@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import QuinnoxLogo from '../assets/Quinnox-Logo.svg';
 
 const SidebarHeader = ({ onClose }) => (
-  <div className="flex  items-center justify-between p-2 border-b border-gray-200">
+  <div className="flex  items-center justify-between p-2 border-b-2 border-gray-300">
     {/* Quinnox Logo */}
     <img 
       src={QuinnoxLogo} 

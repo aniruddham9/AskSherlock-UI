@@ -1,5 +1,6 @@
 import React from 'react';
 import { Menu, User } from 'lucide-react';
+import Robot from "../assets/robot2.png";
 
 const ChatHeader = ({ onOpenSidebar, username = "User Name" }) => {
   return (
@@ -8,13 +9,16 @@ const ChatHeader = ({ onOpenSidebar, username = "User Name" }) => {
       <div className="flex items-center gap-3">
         <button 
           onClick={onOpenSidebar} 
-          className="p-1 hover:bg-gray-100 rounded-full md:hidden"
+          className="p-1 hover:bg-gray-100  rounded-full md:hidden"
           aria-label="Open Sidebar"
         >
           <Menu className="w-6 h-6 text-gray-600" />
         </button>
-        
+
+        <img src={Robot} alt="Bot" className="w-5 h-5 md:w-6 md:h-6 lg:w-10 lg:h-10 rounded-2xl sm:w-6 sm:h-6" />
+
         <div className="flex flex-col">
+
           <h1 className="text-lg md:text-xl  font-black text-blue-800">
           Ask Sherlock
           </h1>
