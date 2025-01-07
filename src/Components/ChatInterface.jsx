@@ -1,5 +1,5 @@
 // ChatInterface.jsx
-import React, { useState } from 'react';
+import React, { useState , useEffect  } from 'react';
 import Sidebar from './Sidebar';
 import ChatHeader from './ChatHeader';
 import ChatInput from './ChatInput';
@@ -7,18 +7,82 @@ import ChatMessage from './ChatMessage';
 import { X } from 'lucide-react';
 
 const ChatInterface = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      content: "Hello, I am Sherlock. How can I help you today?",
-      sender: "bot",
-      feedback: null
-    },
-  ]);
+  // const [messages, setMessages] = useState([
+  //   {
+  //     id: 1,
+  //     content: "Hello, I am Sherlock. How can I help you today?",
+  //     sender: "bot",
+  //     feedback: null
+  //   },
+  // ]);
+  const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [feedbackModal, setFeedbackModal] = useState({ isOpen: false, messageId: null, type: null });
   const [feedbackText, setFeedbackText] = useState("");
+  const [username, setUsername] = useState("User Name"); // Default username
+  const [introMessage, setIntroMessage] = useState(""); // For welcome message
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      console.log("Starting fetchUserData...");
+      try {
+        // New request configuration
+        const response = await fetch('http://127.0.0.1:5000/get_user', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          // Remove any range-related headers
+          mode: 'cors',
+          credentials: 'omit'
+        });
+        
+        console.log("Response received:", {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+  
+        // if (!response.ok) {
+        //   throw new Error(`HTTP error! Status: ${response.status}`);
+        // }
+  
+        // Parse JSON response
+        const data = await response.json();
+        console.log("Parsed data:", data);
+  
+        // Update states with received data
+        setUsername(data.user || "Guest User");
+        setIntroMessage(data.intro_message || "Welcome to Ask Sherlock!");
+        setMessages([
+          {
+            id: Date.now(),
+            content: data.intro_message || "Welcome to Ask Sherlock!",
+            sender: "bot",
+            feedback: null,
+          },
+        ]);
+  
+      } catch (error) {
+        console.error("Error in fetchUserData:", error);
+        // Set default values on error
+        setUsername("Guest User");
+        setIntroMessage("Welcome to Ask Sherlock!");
+        setMessages([
+          {
+            id: Date.now(),
+            content: "Welcome to Ask Sherlock (Guest)",
+            sender: "bot",
+            feedback: null,
+          },
+        ]);
+      }
+    };
+  
+    fetchUserData();
+  }, []);
 
   const handleSubmit = async (e, inputMessage) => {
     e.preventDefault();
@@ -101,7 +165,7 @@ const ChatInterface = () => {
       <div className="flex-1 flex flex-col">
         <ChatHeader
           onOpenSidebar={() => setIsSidebarOpen(true)}
-          username="John Doe"
+          username={username}
         />
        
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-gradient-to-r from-gray-100 to-gray-200 p-2 ">

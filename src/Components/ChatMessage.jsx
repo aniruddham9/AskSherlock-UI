@@ -3,67 +3,84 @@ import { User } from 'lucide-react';
 import Robot from "../assets/robot2.png";
 
 const parseTextWithPatterns = (text) => {
+  console.log("Start parseTextWithPatterns");
+
   if (typeof text !== 'string') return text;
 
   // Split the text into sections, preserving document references of any length
   const parts = text.split(/(\[doc\d+\](?:\[doc\d+\])*)/g);
+  
+  return parts
+    .map((part, index) => {
+      if (!part) return null;
 
-  return parts.map((part, index) => {
-    if (!part) return null;
-
-    // Handle consecutive document references
-    if (part.match(/^\[doc\d+\](?:\[doc\d+\])*$/)) {
-      // Keep the document references exactly as they appear
-      return (
-        <span
-          key={index}
-          className="text-blue-600 hover:underline break-words cursor-pointer"
-        >
-          {part}
-        </span>
-      );
-    }
-
-    // Process other text patterns
-    const subParts = part.split(/(\*\*[\s\S]*?\*\*|\[.*?\]\(.*?\))/g);
-    return subParts.map((subPart, subIndex) => {
-      if (!subPart) return null;
-
-      // Bold text pattern
-      const boldMatch = subPart.match(/^\*\*([\s\S]*?)\*\*$/);
-      if (boldMatch) {
+      // Handle consecutive document references
+      if (part.match(/^(\[((.*?)\d+|string)\])*$|^$/))
+        {
+        // Keep the document references exactly as they appear
         return (
-          <strong key={`${index}-${subIndex}`} className="font-semibold break-words">
-            {boldMatch[1]}
-          </strong>
-        );
-      }
-
-      // Link pattern
-      const linkMatch = subPart.match(/^\[(.*?)\]\((https?:\/\/.*?\.pptx)\)$/);
-      if (linkMatch) {
-        const [, displayText, url] = linkMatch;
-        return (
-          <a
-            key={`${index}-${subIndex}`}
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline break-words"
+          <span
+            key={index}
+            className="text-blue-600 hover:underline break-words cursor-pointer"
           >
-            {displayText}
-          </a>
+            {part}
+          </span>
         );
       }
 
-      return <span key={`${index}-${subIndex}`} className="break-words">{subPart}</span>;
-    }).filter(Boolean);
-  }).filter(Boolean);
+      // Process other text patterns
+      const subParts = part.split(/(\*\*[\s\S]*?\*\*|\[[^\]]+\]\(https?:\/\/[^\)]+\))/g);
+      return subParts
+        .map((subPart, subIndex) => {
+          if (!subPart) return null;
+
+          // Bold text pattern
+          const boldMatch = subPart.match(/^\*\*([\s\S]*?)\*\*$/);
+          if (boldMatch) {
+            return (
+              <strong
+                key={`${index}-${subIndex}`}
+                className="font-semibold break-words"
+              >
+                {boldMatch[1]}
+              </strong>
+            );
+          }
+
+          // Link pattern (adjusted to ensure correct rendering)
+          // const linkMatch = subPart.match(/^\[(.*?)\]\((https?:\/\/.*?)\)$/);
+          const linkMatch = subPart.match(/\[(.*?)\]\((https?:\/\/.*?)\)(?=\s|[^\w\s]|$)/);
+          if (linkMatch) {
+            const [, displayText, url] = linkMatch;
+            return (
+              <a
+                key={`${index}-${subIndex}`}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline break-words"
+              >
+                {displayText}
+              </a>
+            );
+          }
+
+          return (
+            <span key={`${index}-${subIndex}`} className="break-words">
+              {subPart}
+            </span>
+          );
+        })
+        .filter(Boolean);
+    })
+    .filter(Boolean);
 };
 
-const processListStructure = (content) => {
-  if (!content) return [];
 
+const processListStructure = (content) => {
+  console.log("Start processListStructure ");
+  
+  if (!content) return [];
   // Split content to separate conclusion text
   const parts = content.split(/(?=These case studies)/);
   const mainContent = parts[0];
@@ -112,6 +129,8 @@ const processListStructure = (content) => {
 };
 
 const FormattedListItem = ({ number, mainItem, subItems }) => {
+  console.log("Start FormattedListItem ");
+
   return (
     <div className="mb-4 min-w-0">
       <div className="flex min-w-0">
@@ -137,13 +156,15 @@ const FormattedListItem = ({ number, mainItem, subItems }) => {
 };
 
 const formatMessage = (content) => {
+  console.log("Start formatMessage");
+
   if (!content) return null;
-  
+
   const cleanContent = content.trim();
-  
+
   // Check for numbered list pattern
   const hasNumberedList = /^\d+\./.test(cleanContent) || /\n\d+\./.test(cleanContent);
-  
+
   if (hasNumberedList) {
     // Split only if there's a clear numbered list pattern
     const parts = cleanContent.split(/(?=(?:^|\n)1\.)/);
@@ -153,11 +174,13 @@ const formatMessage = (content) => {
 
     return (
       <div className="space-y-4 min-w-0">
+        {/* Render intro text */}
         {introText && (
           <div className="whitespace-pre-wrap break-words">
             {parseTextWithPatterns(introText)}
           </div>
         )}
+        {/* Render the structured list */}
         <div className="space-y-2 min-w-0">
           {structuredContent.map((item, index) => (
             <FormattedListItem
@@ -168,9 +191,10 @@ const formatMessage = (content) => {
             />
           ))}
         </div>
-        {conclusion && (
+        {/* Always render conclusion text, even if it's empty */}
+        {conclusion.trim() && (
           <div className="whitespace-pre-wrap break-words mt-4">
-            {parseTextWithPatterns(conclusion)}
+            {parseTextWithPatterns(conclusion.trim())}
           </div>
         )}
       </div>
@@ -185,7 +209,10 @@ const formatMessage = (content) => {
   );
 };
 
+
 const ChatMessage = ({ message }) => {
+  console.log("Start ChatMessage ");
+
   const isUser = message.sender === 'user';
   
   const formatTime = () => {
