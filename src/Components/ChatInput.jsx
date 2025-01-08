@@ -17,7 +17,7 @@ const ChatInput = ({ handleSubmit }) => {
 
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
-      setInputMessage(transcript);
+      setInputMessage((prev) => prev + transcript);
       adjustTextareaHeight();
       setIsListening(false);
     };
@@ -58,14 +58,31 @@ const ChatInput = ({ handleSubmit }) => {
     adjustTextareaHeight();
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (inputMessage.trim()) {
+        handleSubmit(e, inputMessage);
+        setInputMessage("");
+        adjustTextareaHeight(); // Reset height
+      }
+    } else if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      setInputMessage((prev) => prev + '\n');
+      adjustTextareaHeight();
+    }
+  };
+
   const onSubmit = (e) => {
     e.preventDefault();
     if (isListening) {
       stopVoiceInput();
     }
-    handleSubmit(e, inputMessage);
-    setInputMessage("");
-    adjustTextareaHeight(); // Reset height
+    if (inputMessage.trim()) {
+      handleSubmit(e, inputMessage);
+      setInputMessage("");
+      adjustTextareaHeight(); // Reset height
+    }
   };
 
   return (
@@ -76,6 +93,7 @@ const ChatInput = ({ handleSubmit }) => {
             ref={textareaRef}
             value={inputMessage}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             placeholder={isListening ? "Listening..." : "Message your AI assistant..."}
             className="w-full p-3 md:p-4 pr-24 border border-gray-300 rounded-xl md:rounded-2xl focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 bg-gray-50 text-sm md:text-base resize-none overflow-hidden"
             rows="1"
