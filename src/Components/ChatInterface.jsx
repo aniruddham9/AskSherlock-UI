@@ -28,7 +28,7 @@ const ChatInterface = () => {
       console.log("Starting fetchUserData...");
       try {
         // New request configuration
-        const response = await fetch('https://asksherlock.azurewebsites.net/get_user', {
+        const response = await fetch('http://localhost:5000/get_user', {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -100,7 +100,7 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://asksherlock.azurewebsites.net/chat', {
+      const response = await fetch('http://localhost:5000/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

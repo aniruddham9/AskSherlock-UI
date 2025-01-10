@@ -1,23 +1,17 @@
 import React from 'react';
-import { User } from 'lucide-react';
+import { User, ThumbsUp, ThumbsDown } from 'lucide-react';
 import Robot from "../assets/robot2.png";
 
 const parseTextWithPatterns = (text) => {
-  console.log("Start parseTextWithPatterns");
-
   if (typeof text !== 'string') return text;
 
-  // Split the text into sections, preserving document references of any length
   const parts = text.split(/(\[doc\d+\](?:\[doc\d+\])*)/g);
-  
+
   return parts
     .map((part, index) => {
       if (!part) return null;
 
-      // Handle consecutive document references
-      if (part.match(/^(\[((.*?)\d+|string)\])*$|^$/))
-        {
-        // Keep the document references exactly as they appear
+      if (part.match(/^\[((.*?)\d+|string)\]*$/)) {
         return (
           <span
             key={index}
@@ -28,13 +22,11 @@ const parseTextWithPatterns = (text) => {
         );
       }
 
-      // Process other text patterns
       const subParts = part.split(/(\*\*[\s\S]*?\*\*|\[[^\]]+\]\(https?:\/\/[^\)]+\))/g);
       return subParts
         .map((subPart, subIndex) => {
           if (!subPart) return null;
 
-          // Bold text pattern
           const boldMatch = subPart.match(/^\*\*([\s\S]*?)\*\*$/);
           if (boldMatch) {
             return (
@@ -47,8 +39,6 @@ const parseTextWithPatterns = (text) => {
             );
           }
 
-          // Link pattern (adjusted to ensure correct rendering)
-          // const linkMatch = subPart.match(/^\[(.*?)\]\((https?:\/\/.*?)\)$/);
           const linkMatch = subPart.match(/\[(.*?)\]\((https?:\/\/.*?)\)(?=\s|[^\w\s]|$)/);
           if (linkMatch) {
             const [, displayText, url] = linkMatch;
@@ -76,151 +66,8 @@ const parseTextWithPatterns = (text) => {
     .filter(Boolean);
 };
 
-
-const processListStructure = (content) => {
-  console.log("Start processListStructure ");
-  
-  if (!content) return [];
-  // Split content to separate conclusion text
-  const parts = content.split(/(?=These case studies)/);
-  const mainContent = parts[0];
-  const conclusionText = parts[1] || '';
-  
-  const lines = mainContent.split('\n').map(line => line.trim()).filter(line => line);
-  const result = [];
-  let currentMainItem = null;
-  let currentNumber = '';
-  let currentSubItems = [];
-
-  lines.forEach(line => {
-    const numberMatch = line.match(/^(\d+)\./);
-    if (numberMatch) {
-      if (currentMainItem) {
-        result.push({
-          number: currentNumber,
-          mainItem: currentMainItem,
-          subItems: [...currentSubItems]
-        });
-        currentSubItems = [];
-      }
-      currentNumber = numberMatch[1];
-      const mainContent = line.slice(numberMatch[0].length).trim();
-      currentMainItem = mainContent;
-    } else if (line.startsWith('-')) {
-      const subContent = line.slice(1).trim();
-      currentSubItems.push(subContent);
-    } else {
-      // Handle non-list content within a numbered item
-      if (currentMainItem) {
-        currentMainItem += ' ' + line;
-      }
-    }
-  });
-
-  if (currentMainItem) {
-    result.push({
-      number: currentNumber,
-      mainItem: currentMainItem,
-      subItems: [...currentSubItems]
-    });
-  }
-
-  return { items: result, conclusion: conclusionText };
-};
-
-const FormattedListItem = ({ number, mainItem, subItems }) => {
-  console.log("Start FormattedListItem ");
-
-  return (
-    <div className="mb-4 min-w-0">
-      <div className="flex min-w-0">
-        <span className="mr-2 flex-shrink-0">{number}.</span>
-        <span className="break-words min-w-0 flex-1">
-          {parseTextWithPatterns(mainItem)}
-        </span>
-      </div>
-      {subItems.length > 0 && (
-        <ul className="ml-8 mt-2 space-y-2">
-          {subItems.map((item, index) => (
-            <li key={index} className="flex items-start min-w-0">
-              <span className="mr-2 flex-shrink-0">•</span>
-              <div className="break-words min-w-0 flex-1">
-                {parseTextWithPatterns(item)}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
-const formatMessage = (content) => {
-  console.log("Start formatMessage");
-
-  if (!content) return null;
-
-  const cleanContent = content.trim();
-
-  // Check for numbered list pattern
-  const hasNumberedList = /^\d+\./.test(cleanContent) || /\n\d+\./.test(cleanContent);
-
-  if (hasNumberedList) {
-    // Split only if there's a clear numbered list pattern
-    const parts = cleanContent.split(/(?=(?:^|\n)1\.)/);
-    const introText = parts[0].trim();
-    const listContent = parts.slice(1).join('');
-    const { items: structuredContent, conclusion } = processListStructure(listContent);
-
-    return (
-      <div className="space-y-4 min-w-0">
-        {/* Render intro text */}
-        {introText && (
-          <div className="whitespace-pre-wrap break-words">
-            {parseTextWithPatterns(introText)}
-          </div>
-        )}
-        {/* Render the structured list */}
-        <div className="space-y-2 min-w-0">
-          {structuredContent.map((item, index) => (
-            <FormattedListItem
-              key={index}
-              number={item.number}
-              mainItem={item.mainItem}
-              subItems={item.subItems}
-            />
-          ))}
-        </div>
-        {/* Always render conclusion text, even if it's empty */}
-        {conclusion.trim() && (
-          <div className="whitespace-pre-wrap break-words mt-4">
-            {parseTextWithPatterns(conclusion.trim())}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // For non-list content, preserve everything exactly as is
-  return (
-    <div className="whitespace-pre-wrap break-words min-w-0">
-      {parseTextWithPatterns(cleanContent)}
-    </div>
-  );
-};
-
-
-const ChatMessage = ({ message }) => {
-  console.log("Start ChatMessage ");
-
+const ChatMessage = ({ message, showFeedback, onFeedback }) => {
   const isUser = message.sender === 'user';
-  
-  const formatTime = () => {
-    return new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   return (
     <div className="flex w-full max-w-4xl mx-auto px-4">
@@ -246,13 +93,26 @@ const ChatMessage = ({ message }) => {
                 'bg-gray-600 text-white rounded-tr-none' :
                 'bg-white shadow-md text-gray-800 rounded-tl-none'}`}>
               <div className="min-w-0 max-w-full">
-                {formatMessage(message.content)}
+                {parseTextWithPatterns(message.content)}
               </div>
             </div>
 
-            <div className="text-xs text-gray-500 mt-1 px-1">
-              {formatTime()}
-            </div>
+            {!isUser && showFeedback && (
+              <div className="flex gap-2 mt-2 text-gray-500 text-sm">
+                <button
+                  onClick={() => onFeedback('up', message.id)}
+                  className="flex items-center gap-1 hover:text-blue-600"
+                >
+                  <ThumbsUp className="w-4 h-4" /> Positive
+                </button>
+                <button
+                  onClick={() => onFeedback('down', message.id)}
+                  className="flex items-center gap-1 hover:text-red-600"
+                >
+                  <ThumbsDown className="w-4 h-4" /> Negative
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
