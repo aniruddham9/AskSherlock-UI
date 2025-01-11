@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './input.css';
 import ChatInterface from './Components/ChatInterface';
 import MagnifierScreen from './Components/MagnifierScreen';
-import FeedbackModal from './Components/FeedbackModal';
+// import FeedbackModal from './Components/Feedback';
 
 const App = () => {
   return (
@@ -11,7 +11,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<MagnifierScreen />} />
         <Route path="/chat" element={<ChatInterface />} />
-        <Route path="/feedback" element={<FeedbackModal />} />
+        {/* <Route path="/feedback" element={<FeedbackModal />} /> */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

@@ -3,7 +3,7 @@ import React from 'react';
 import { MessageSquare, ChevronRight } from 'lucide-react';
 
 const ChatHistoryItem = ({ chat }) => (
-  <div className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer mb-1 group">
+  <div className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer hidden mb-1 group">
     <div className="flex items-center gap-3">
       <MessageSquare className="w-5 h-5 text-gray-600" />
       <div className="flex-1 min-w-0">
