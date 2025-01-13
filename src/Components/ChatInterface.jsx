@@ -1,5 +1,5 @@
 // ChatInterface.jsx
-import React, { useState , useEffect  } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import ChatHeader from './ChatHeader';
 import ChatInput from './ChatInput';
@@ -7,14 +7,6 @@ import ChatMessage from './ChatMessage';
 import { X } from 'lucide-react';
 
 const ChatInterface = () => {
-  // const [messages, setMessages] = useState([
-  //   {
-  //     id: 1,
-  //     content: "Hello, I am Sherlock. How can I help you today?",
-  //     sender: "bot",
-  //     feedback: null
-  //   },
-  // ]);
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -25,35 +17,23 @@ const ChatInterface = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      console.log("Starting fetchUserData...");
       try {
+<<<<<<< HEAD
         // New request configuration
         const response = await fetch('http://127.0.0.1:5000/get_user', {
+=======
+        const response = await fetch('https://asksherlock.azurewebsites.net/get_user', {
+>>>>>>> ba59fbf0d6b6a63dd83d931e4809616f5507a352
           method: 'GET',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          // Remove any range-related headers
           mode: 'cors',
           credentials: 'omit'
         });
-        
-        console.log("Response received:", {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries())
-        });
-  
-        // if (!response.ok) {
-        //   throw new Error(`HTTP error! Status: ${response.status}`);
-        // }
-  
-        // Parse JSON response
+
         const data = await response.json();
-        console.log("Parsed data:", data);
-  
-        // Update states with received data
         setUsername(data.user || "Guest User");
         setIntroMessage(data.intro_message || "Welcome to Ask Sherlock!");
         setMessages([
@@ -63,11 +43,14 @@ const ChatInterface = () => {
             sender: "bot",
             feedback: null,
           },
+          
         ]);
-  
+        console.dir(data)
+
       } catch (error) {
-        console.error("Error in fetchUserData:", error);
-        // Set default values on error
+        // console.error("Error fetching user data:", error);
+        console.log("Error fetching user data");
+        
         setUsername("Guest User");
         setIntroMessage("Welcome to Ask Sherlock!");
         setMessages([
@@ -80,118 +63,171 @@ const ChatInterface = () => {
         ]);
       }
     };
-  
+
     fetchUserData();
   }, []);
 
   const handleSubmit = async (e, inputMessage) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
-
-    // Add user message
+  
     const userMessage = {
       id: Date.now(),
       content: inputMessage,
       sender: "user",
-      feedback: null
+      feedback: null,
     };
-    setMessages(prev => [...prev, userMessage]);
-    
+    setMessages((prev) => [...prev, userMessage]);
+  
     setIsLoading(true);
-
+  
     try {
+<<<<<<< HEAD
       const response = await fetch('http://127.0.0.1:5000/chat', {
+=======
+      const userHistory = messages
+        .filter((msg) => msg.sender === "user")
+        .map((msg) => msg.content)
+        .join("\n");
+      const aiHistory = messages
+        .filter((msg) => msg.sender === "bot")
+        .map((msg) => msg.content)
+        .join("\n");
+  
+      const response = await fetch('https://asksherlock.azurewebsites.net/chat', {
+>>>>>>> ba59fbf0d6b6a63dd83d931e4809616f5507a352
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          user: inputMessage 
+        body: JSON.stringify({
+          history: {
+            user: userHistory || "", // Send empty string if no user messages
+            ai: aiHistory || "",    // Send empty string if no AI messages
+          },
+          query: inputMessage,
         }),
       });
-      
+  
+      // if (!response.ok) {
+      //   console.error(`Server error: ${response.status}`);
+      //   throw new Error(`Server returned status: ${response.status}`);
+      // }
+  
       const data = await response.json();
-      console.log("Response : " , data);
-      
-      // Extract and clean the message content
-      let botMessageContent;
-      if (data.ai) {
-        botMessageContent = data.ai;
-      } else if (data.response) {
-        botMessageContent = data.response;
-      } else if (data.assistant) {
-        botMessageContent = data.assistant;
-      } else if (typeof data === 'string') {
-        botMessageContent = data;
-      } else {
-        botMessageContent = "I couldn't process that request properly.";
-      }
-      
-      // Clean up the content
-      botMessageContent = botMessageContent
-        .replace(/\[doc\d+\]/g, '')
-        .replace(/\n\s*\n/g, '\n')
-        .trim();
-      
+  
       const botMessage = {
         id: Date.now() + 1,
-        content: botMessageContent,
+        content: data.ai || data.response || "I couldn't process that request.",
         sender: "bot",
-        feedback: null
+        feedback: null,
       };
-      setMessages(prev => [...prev, botMessage]);
+      setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error:', error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        content: "Sorry, I encountered an error. Please try again.",
-        sender: "bot",
-        feedback: null
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      console.error("Error submitting chat input:", error);
+  
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          content: "Sorry, I encountered an error. Please try again.",
+          sender: "bot",
+          feedback: null,
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
+  
+
+  const handleFeedbackSubmit = async () => {
+    const feedbackPayload = {
+      user: username,
+      ai: messages.find((msg) => msg.id === feedbackModal.messageId)?.content || "",
+      feedback: {
+        type: feedbackModal.type,
+        comment: feedbackText,
+      },
+    };
+
+    try {
+      await fetch('https://asksherlock.azurewebsites.net/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedbackPayload),
+      });
+      console.log("Feedback submitted successfully.");
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+    } finally {
+      setFeedbackModal({ isOpen: false, messageId: null, type: null });
+      setFeedbackText("");
+    }
+  };
 
   return (
-    <div className="h-screen flex relative  bg-gray-50">
+    <div className="h-screen flex relative bg-gray-50">
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         chatHistory={[]}
       />
-     
+
       <div className="flex-1 flex flex-col">
         <ChatHeader
           onOpenSidebar={() => setIsSidebarOpen(true)}
           username={username}
         />
-       
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-gradient-to-r from-gray-100 to-gray-200 p-2 ">
-          {messages.map(message => (
+{/* 
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-gradient-to-r from-gray-100 to-gray-200 p-2">
+          {messages.map((message) => (
             <ChatMessage key={message.id} message={message} />
           ))}
-          
+
           {isLoading && (
             <ChatMessage
               message={{
                 id: 'loading',
                 content: "Thinking...",
-                sender: "bot"
+                sender: "bot",
               }}
             />
           )}
-        </div>
+        </div> */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-gradient-to-r from-gray-100 to-gray-200 p-2">
+  {messages.map((message ,index) => (
+    <ChatMessage 
+      key={message.id} 
+      message={message} 
+      onFeedback={(messageId, type) =>
+        setFeedbackModal({ isOpen: true, messageId, type })
+      }
+      isLastMessage={index === messages.length - 1}
+    />
+  ))}
 
-        <div className="border-t bg-gradient-to-r from-gray-300 to-gray-300 p-2  ">
-          <div className="max-w-4xl mx-auto ">
+  {isLoading && (
+    <ChatMessage
+      message={{
+        id: 'loading',
+        content: "Thinking...",
+        sender: "bot",
+      }}
+    />
+  )}
+</div>
+
+
+        <div className="border-t bg-gradient-to-r from-gray-300 to-gray-300 p-2">
+          <div className="max-w-4xl mx-auto">
             <ChatInput handleSubmit={handleSubmit} />
           </div>
         </div>
       </div>
 
-      {/* Feedback Modal */}
       {feedbackModal.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
@@ -199,7 +235,7 @@ const ChatInterface = () => {
               <h3 className="text-lg font-semibold">
                 {feedbackModal.type === 'up' ? 'Positive' : 'Negative'} Feedback
               </h3>
-              <button 
+              <button
                 onClick={() => setFeedbackModal({ isOpen: false, messageId: null, type: null })}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -220,10 +256,7 @@ const ChatInterface = () => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  setFeedbackModal({ isOpen: false, messageId: null, type: null });
-                  setFeedbackText("");
-                }}
+                onClick={handleFeedbackSubmit}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 Submit
@@ -237,3 +270,4 @@ const ChatInterface = () => {
 };
 
 export default ChatInterface;
+
