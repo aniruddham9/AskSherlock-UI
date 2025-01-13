@@ -18,7 +18,7 @@ const ChatInterface = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch('https://asksherlock.azurewebsites.net/get_user', {
+        const response = await fetch('http://127.0.0.1:5000/get_user', {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -86,7 +86,7 @@ const ChatInterface = () => {
         .map((msg) => msg.content)
         .join("\n");
   
-      const response = await fetch('https://asksherlock.azurewebsites.net/chat', {
+      const response = await fetch('http://127.0.0.1:5000/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ const ChatInterface = () => {
     };
 
     try {
-      await fetch('https://asksherlock.azurewebsites.net/feedback', {
+      await fetch('http://127.0.0.1:5000/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

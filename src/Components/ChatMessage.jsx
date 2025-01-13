@@ -2,64 +2,128 @@ import React, { useState } from 'react';
 import Robot from "../assets/robot2.png";
 import { User, ThumbsUp, ThumbsDown } from 'lucide-react';
 
+
 const parseTextWithPatterns = (text) => {
   if (typeof text !== 'string') return text;
 
-  // Split the text into parts, keeping document references and links.
+  // Split the text into parts, keeping document references and hyperlinks
   const parts = text.split(/(\[doc\d+\](?:\[doc\d+\])*)/g);
 
   return parts
     .map((part, index) => {
       if (!part) return null;
 
-      // Handle document references
-      if (part.match(/^\[(?:doc\d+|\[doc\d+\])+\]$/)) {
-        return (
-          <span key={index} className="text-blue-600 hover:underline break-words cursor-pointer">
-            {part}
+      // Handle document references (e.g., [doc1][doc2][doc3])
+      if (part.match(/^\[doc\d+\](?:\[doc\d+\])*$/)) {
+        const docReferences = part.match(/\[doc\d+\]/g); // Match each [docX] individually
+        return docReferences.map((docRef, docIndex) => (
+          <span
+            key={`${index}-${docIndex}`}
+            className="text-blue-600 hover:underline break-words cursor-pointer"
+          >
+            {docRef}
           </span>
-        );
+        ));
       }
 
-      // Process Bold and Links
+      // Handle document references with URLs (e.g., [doc1](url))
+      if (part.match(/\[doc\d+\]\(https?:\/\/[^\s)]+\)/g)) {
+        const docLinks = [...part.matchAll(/\[doc\d+\]\((https?:\/\/[^\s)]+)\)/g)];
+        return docLinks.map((docLink, linkIndex) => (
+          <a
+            key={`${index}-${linkIndex}`}
+            href={docLink[1]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline break-words"
+          >
+            {docLink[0]}
+          </a>
+        ));
+      }
+
+      // Process Links and Bold text
       const subParts = [];
       let lastIndex = 0;
       let match;
-      
-      // Regex for bold text (**bold**)
-      const boldPattern = /\*\*([^\*]+)\*\*/g; // Matches text between **...**
-      const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g; // Matches [text](url)
 
-      // Find all bold text first
+      // Regex for hyperlinks [text](url)
+      const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+
+      // Regex for bold text **bold**
+      const boldPattern = /\*\*([^\*]+)\*\*/g;
+
+      // Process bold text first, as it can wrap hyperlinks
       while ((match = boldPattern.exec(part)) !== null) {
-        // Push text before the bold
         if (match.index > lastIndex) {
           subParts.push(part.slice(lastIndex, match.index));
         }
 
-        // Push the bolded text
-        const boldText = match[1]; // Bold text content
+        const boldContent = match[1]; // Content inside ** **
+        const boldParts = []; // Process any links inside bold content
+
+        let boldMatch;
+        let boldLastIndex = 0;
+
+        while ((boldMatch = linkPattern.exec(boldContent)) !== null) {
+          if (boldMatch.index > boldLastIndex) {
+            boldParts.push(boldContent.slice(boldLastIndex, boldMatch.index));
+          }
+
+          const boldLinkText = boldMatch[1];
+          const boldUrl = boldMatch[2];
+          boldParts.push(
+            <a
+              key={`${index}-${match.index}-${boldMatch.index}`}
+              href={boldUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline break-words"
+            >
+              {boldLinkText}
+            </a>
+          );
+
+          boldLastIndex = linkPattern.lastIndex;
+        }
+
+        // Add any remaining text inside the bold content
+        if (boldLastIndex < boldContent.length) {
+          boldParts.push(boldContent.slice(boldLastIndex));
+        }
+
+        // Wrap the processed bold content
         subParts.push(
-          <strong key={`${index}-${match.index}`} className="font-semibold break-words">
-            {boldText}
+          <strong
+            key={`${index}-${match.index}`}
+            className="font-semibold break-words"
+          >
+            {boldParts.length > 0 ? boldParts : boldContent}
           </strong>
         );
 
         lastIndex = boldPattern.lastIndex;
       }
 
-      // After bold text, handle links
-      while ((match = linkPattern.exec(part)) !== null) {
-        // Push text before the link
+      // Process links outside of bold text
+      const remainingText = part.slice(lastIndex);
+      lastIndex = 0;
+
+      while ((match = linkPattern.exec(remainingText)) !== null) {
         if (match.index > lastIndex) {
-          subParts.push(part.slice(lastIndex, match.index));
+          subParts.push(remainingText.slice(lastIndex, match.index));
         }
 
-        // Push the link as a clickable element
-        const linkText = match[1]; // The link text
-        const url = match[2]; // The URL
+        const linkText = match[1];
+        const url = match[2];
         subParts.push(
-          <a key={`${index}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-words">
+          <a
+            key={`${index}-${match.index}`}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline break-words"
+          >
             {linkText}
           </a>
         );
@@ -67,16 +131,18 @@ const parseTextWithPatterns = (text) => {
         lastIndex = linkPattern.lastIndex;
       }
 
-      // Add any remaining text after all bold or links have been processed
-      if (lastIndex < part.length) {
-        subParts.push(part.slice(lastIndex));
+      // Add any remaining text after links
+      if (lastIndex < remainingText.length) {
+        subParts.push(remainingText.slice(lastIndex));
       }
 
-      // Return the processed subParts or the original part
       return subParts.length > 0 ? subParts : [part];
     })
+    .flat() // Flatten arrays created by mapping document references
     .filter(Boolean);
 };
+
+
 
 
 
