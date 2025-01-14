@@ -6,7 +6,6 @@ import { User, ThumbsUp, ThumbsDown } from 'lucide-react';
 const parseTextWithPatterns = (text) => {
   if (typeof text !== 'string') return text;
 
-  // Split the text into parts, keeping document references and hyperlinks
   const parts = text.split(/(\[doc\d+\](?:\[doc\d+\])*)/g);
 
   return parts
@@ -138,7 +137,7 @@ const parseTextWithPatterns = (text) => {
 
       return subParts.length > 0 ? subParts : [part];
     })
-    .flat() // Flatten arrays created by mapping document references
+    .flat() 
     .filter(Boolean);
 };
 
