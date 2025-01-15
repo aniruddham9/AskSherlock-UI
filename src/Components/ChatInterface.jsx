@@ -18,12 +18,7 @@ const ChatInterface = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-<<<<<<< HEAD
-        // New request configuration
-        const response = await fetch('http://127.0.0.1:5000/get_user', {
-=======
-        const response = await fetch('https://asksherlock.azurewebsites.net/get_user', {
->>>>>>> ba59fbf0d6b6a63dd83d931e4809616f5507a352
+        const response = await fetch('http://localhost:8080/get_user', {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -33,7 +28,10 @@ const ChatInterface = () => {
           credentials: 'omit'
         });
 
+        console.log("response json")
+        console.log("Before Awaiting Response")
         const data = await response.json();
+        console.log("After getting Response - " || data)
         setUsername(data.user || "Guest User");
         setIntroMessage(data.intro_message || "Welcome to Ask Sherlock!");
         setMessages([
@@ -82,9 +80,6 @@ const ChatInterface = () => {
     setIsLoading(true);
   
     try {
-<<<<<<< HEAD
-      const response = await fetch('http://127.0.0.1:5000/chat', {
-=======
       const userHistory = messages
         .filter((msg) => msg.sender === "user")
         .map((msg) => msg.content)
@@ -94,8 +89,7 @@ const ChatInterface = () => {
         .map((msg) => msg.content)
         .join("\n");
   
-      const response = await fetch('https://asksherlock.azurewebsites.net/chat', {
->>>>>>> ba59fbf0d6b6a63dd83d931e4809616f5507a352
+      const response = await fetch('http://localhost:8080/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

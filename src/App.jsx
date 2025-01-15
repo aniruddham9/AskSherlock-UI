@@ -12,7 +12,7 @@ const App = () => {
         <Route path="/" element={<MagnifierScreen />} />
         <Route path="/chat" element={<ChatInterface />} />
         {/* <Route path="/feedback" element={<FeedbackModal />} /> */}
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* <Route path="*" element={<Navigate to="/" />} /> */}
       </Routes>
     </Router>
   );
